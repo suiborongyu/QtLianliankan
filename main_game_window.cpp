@@ -1,6 +1,5 @@
 #include <QDebug>
 #include <QSound>
-#include <QAction>
 #include <QMessageBox>
 #include <QPainter>
 #include <QLine>
@@ -23,7 +22,7 @@ const int kLinkTimerDelay = 700;
 // -------------------------- //
 
 // 游戏主界面
-MainGameWindow::MainGameWindow(QWidget *parent) :
+MainGameWindow::MainGameWindow( QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainGameWindow),
     preIcon(NULL),
@@ -81,7 +80,7 @@ void MainGameWindow::initGame(GameLevel level)
             imageButton[i]->setIconSize(QSize(kIconSize, kIconSize));
 
             // 添加按下的信号槽
-            connect(imageButton[i], SIGNAL(pressed()), this, SLOT(onIconButtonPressed()));
+            connect(imageButton[i], SIGNAL(clicked()), this, SLOT(onIconButtonPressed()));
         }
         else
             imageButton[i]->hide();
@@ -95,22 +94,13 @@ void MainGameWindow::initGame(GameLevel level)
     // 游戏计时器
     gameTimer = new QTimer(this);
     connect(gameTimer, SIGNAL(timeout()), this, SLOT(gameTimerEvent()));
-    gameTimer->start(kGameTimerInterval);
+    gameTimer->setInterval(kGameTimerInterval);
+    gameTimer->start();
 
     // 连接状态值
     isLinking = false;
 
-    // 播放背景音乐(QMediaPlayer只能播放绝对路径文件),确保res文件在程序执行文件目录里而不是开发目录
-    audioPlayer = new QMediaPlayer(this);
-    QString curDir = QCoreApplication::applicationDirPath(); // 这个api获取路径在不同系统下不一样,mac 下需要截取路径
-    QStringList sections = curDir.split(QRegExp("[/]"));
-    QString musicPath;
 
-    for (int i = 0; i < sections.size() - 3; i++)
-        musicPath += sections[i] + "/";
-
-    audioPlayer->setMedia(QUrl::fromLocalFile(musicPath + "res/sound/backgrand.mp3"));
-    audioPlayer->play();
 }
 
 void MainGameWindow::onIconButtonPressed()
@@ -128,7 +118,7 @@ void MainGameWindow::onIconButtonPressed()
     // 记录当前点击的icon
     curIcon = dynamic_cast<IconButton *>(sender());
 
-    if(!preIcon)
+    if(!preIcon)  //点第一个
     {
         // 播放音效
         QSound::play(":/res/sound/select.wav");
@@ -137,7 +127,7 @@ void MainGameWindow::onIconButtonPressed()
         curIcon->setStyleSheet(kIconClickedStyle);
         preIcon = curIcon;
     }
-    else
+    else  //点第二个
     {
         if(curIcon != preIcon)
         {
@@ -211,6 +201,7 @@ void MainGameWindow::handleLinkEffect()
     isLinking = false;
 }
 
+//画线函数
 bool MainGameWindow::eventFilter(QObject *watched, QEvent *event)
 {
     // 重绘时会调用，可以手动调用
@@ -220,7 +211,7 @@ bool MainGameWindow::eventFilter(QObject *watched, QEvent *event)
         QPen pen;
         QColor color(rand() % 256, rand() % 256, rand() % 256);
         pen.setColor(color);
-        pen.setWidth(5);
+        pen.setWidth(6);
         painter.setPen(pen);
 
         QString str;
@@ -400,8 +391,7 @@ void MainGameWindow::createGameWithLevel()
         }
     }
 
-    // 停止音乐
-    audioPlayer->stop();
+
 
     // 重绘
     update();
